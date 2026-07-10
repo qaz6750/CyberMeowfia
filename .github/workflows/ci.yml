@@ -12,12 +12,11 @@ permissions:
 env:
   ANDROID_API: "29"
   IONSTACK_ANDROID_API: "35"
-  IONSTACK_PROJECT: "blazer-CP2A.260605.012"
   NDK_VERSION: "27.2.12479018"
 
 jobs:
   build-futex-poc:
-    name: Build futex PoC for Android arm64
+    name: Build Android arm64 artifacts
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -34,14 +33,10 @@ jobs:
           ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
         run: bash scripts/ci-build-futex-poc.sh
 
-      - name: Build IonStack preload
+      - name: Build IonStack preload targets
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
-        run: |
-          make -C IonStack/CVE-2026-43499/exploit \
-            API=${{ env.IONSTACK_ANDROID_API }} \
-            PROJECT=${{ env.IONSTACK_PROJECT }} \
-            info preload
+        run: bash scripts/ci-build-ionstack-exploit-targets.sh
 
       - name: Upload futex PoC artifact
         uses: actions/upload-artifact@v4
@@ -51,10 +46,12 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Upload IonStack preload artifact
+      - name: Upload IonStack preload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ionstack-preload-${{ env.IONSTACK_PROJECT }}
-          path: IonStack/CVE-2026-43499/exploit/build/${{ env.IONSTACK_PROJECT }}/bin/preload.so
+          name: ionstack-preload-arm64-all-targets
+          path: |
+            IonStack/CVE-2026-43499/exploit/build/*/bin/preload.so
+            IonStack/CVE-2026-43499/exploit/build/ionstack-preload-sha256sums.txt
           if-no-files-found: error
           retention-days: 7
